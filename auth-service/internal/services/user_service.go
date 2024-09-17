@@ -10,7 +10,6 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/utils"
 	"github.com/saufiroja/go-otel/auth-service/pkg/logging"
 	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -19,15 +18,17 @@ type userService struct {
 	Logger         logging.Logger
 	GenerateToken  *utils.GenerateToken
 	Trace          *tracing.Tracer
+	PasswordHasher utils.PasswordHasher
 }
 
 func NewUserService(userRepository repositories.UserRepository, logger logging.Logger,
-	generateToken *utils.GenerateToken, trace *tracing.Tracer) UserService {
+	generateToken *utils.GenerateToken, trace *tracing.Tracer, passwordHasher utils.PasswordHasher) UserService {
 	return &userService{
 		UserRepository: userRepository,
 		Logger:         logger,
 		GenerateToken:  generateToken,
 		Trace:          trace,
+		PasswordHasher: passwordHasher,
 	}
 }
 
@@ -46,7 +47,7 @@ func (u *userService) RegisterUser(ctx context.Context, request *requests.Regist
 	}
 
 	// hash password
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	password, err := u.PasswordHasher.Hash(ctx, request.Password)
 	if err != nil {
 		u.Logger.LogError(fmt.Sprintf("Error hashing password: %v", err))
 		return fmt.Errorf("error hashing password: %v", err)
@@ -57,7 +58,7 @@ func (u *userService) RegisterUser(ctx context.Context, request *requests.Regist
 		UserId:    uuid.New().String(),
 		FullName:  request.FullName,
 		Email:     request.Email,
-		Password:  string(passwordHash),
+		Password:  password,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	}
@@ -77,10 +78,10 @@ func (u *userService) LoginUser(ctx context.Context, request *requests.LoginRequ
 		return nil, fmt.Errorf("error getting user by email: %v", err)
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	err = u.PasswordHasher.Compare(ctx, user.Password, request.Password)
 	if err != nil {
-		u.Logger.LogError(fmt.Sprintf("Invalid password: %v", err))
-		return nil, fmt.Errorf("invalid password: %v", err)
+		u.Logger.LogError(fmt.Sprintf("Error comparing password: %v", err))
+		return nil, fmt.Errorf("error comparing password: %v", err)
 	}
 
 	// Generate token

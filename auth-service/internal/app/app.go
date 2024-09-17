@@ -34,9 +34,10 @@ func (a *App) Start() {
 	tracer := tracing.NewExporter(context.Background(), logger, serviceName, conf)
 	//utils
 	generateToken := utils.NewGenerateToken(conf, tracer)
+	passwordHasher := utils.NewBcryptHasher(tracer)
 
 	userRepository := repositories.NewUserRepository(postgresInstance, tracer)
-	userService := services.NewUserService(userRepository, logger, generateToken, tracer)
+	userService := services.NewUserService(userRepository, logger, generateToken, tracer, passwordHasher)
 	userController := controllers.NewUserController(userService, tracer)
 
 	a.Post("/register", userController.RegisterUser)
