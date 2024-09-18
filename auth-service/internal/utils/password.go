@@ -2,7 +2,7 @@ package utils
 
 import (
 	"context"
-	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 	"golang.org/x/crypto/bcrypt"
 )
 

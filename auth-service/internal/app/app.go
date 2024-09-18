@@ -11,7 +11,7 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/utils"
 	"github.com/saufiroja/go-otel/auth-service/pkg/databases"
 	"github.com/saufiroja/go-otel/auth-service/pkg/logging"
-	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 )
 
 type App struct {

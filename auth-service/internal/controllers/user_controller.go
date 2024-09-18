@@ -5,7 +5,7 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/contracts/requests"
 	"github.com/saufiroja/go-otel/auth-service/internal/contracts/responses"
 	"github.com/saufiroja/go-otel/auth-service/internal/services"
-	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"

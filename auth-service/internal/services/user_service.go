@@ -10,7 +10,7 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/repositories"
 	"github.com/saufiroja/go-otel/auth-service/internal/utils"
 	"github.com/saufiroja/go-otel/auth-service/pkg/logging"
-	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"time"

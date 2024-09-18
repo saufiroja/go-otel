@@ -5,7 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/saufiroja/go-otel/auth-service/config"
 	"github.com/saufiroja/go-otel/auth-service/internal/contracts/requests"
-	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 	"time"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/saufiroja/go-otel/auth-service/internal/models"
 	"github.com/saufiroja/go-otel/auth-service/pkg/databases"
-	"github.com/saufiroja/go-otel/auth-service/pkg/tracing"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
