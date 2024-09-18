@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   auth-service:
-    image: auth-service:1.0.2
+    image: auth-service:1.0.1
     build:
       context: ./auth-service
       dockerfile: ./Dockerfile
@@ -47,6 +47,9 @@ services:
     restart: always
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - otel-collector
+      - postgres-exporter
     ports:
       - '9090:9090'
     networks:
@@ -115,6 +118,20 @@ services:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
       - '16686:16686'
+    networks:
+      - go-otel
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - '9187:9187'
+    depends_on:
+      - postgres
     networks:
       - go-otel
 
