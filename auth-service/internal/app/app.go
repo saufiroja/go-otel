@@ -11,6 +11,7 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/utils"
 	"github.com/saufiroja/go-otel/auth-service/pkg/databases"
 	"github.com/saufiroja/go-otel/auth-service/pkg/logging"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/metrics"
 	"github.com/saufiroja/go-otel/auth-service/pkg/observability/providers"
 	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 )
@@ -33,15 +34,16 @@ func (a *App) Start() {
 
 	const serviceName = "auth-service"
 	resource := providers.NewProviderFactory(logger)
-	tracer := tracing.NewTracer(context.Background(), serviceName, resource, conf, logger)
-	
+	ctx := context.Background()
+	tracer := tracing.NewTracer(ctx, serviceName, resource, conf, logger)
+	meter := metrics.NewMetric(ctx, serviceName, resource, conf, logger)
 	//utils
 	generateToken := utils.NewGenerateToken(conf, tracer)
 	passwordHasher := utils.NewBcryptHasher(tracer)
 
 	userRepository := repositories.NewUserRepository(postgresInstance, tracer)
 	userService := services.NewUserService(userRepository, logger, generateToken, tracer, passwordHasher)
-	userController := controllers.NewUserController(userService, tracer)
+	userController := controllers.NewUserController(userService, tracer, meter)
 
 	a.Post("/register", userController.RegisterUser)
 	a.Post("/login", userController.LoginUser)
