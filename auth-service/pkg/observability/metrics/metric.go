@@ -46,10 +46,10 @@ func NewMetric(ctx context.Context, serviceName string, provider *providers.Prov
 	}
 }
 
-func (m *Metric) Counter(ctx context.Context, name string, description string) {
+func (m *Metric) Counter(ctx context.Context, name string, description, unit string) {
 	counter, err := m.Meter.Int64Counter(fmt.Sprintf("%s.%s", m.ServiceName, name),
 		metric.WithDescription(description),
-		metric.WithUnit("1"),
+		metric.WithUnit(unit),
 	)
 	if err != nil {
 		m.logger.LogError(fmt.Sprintf("failed to create counter: %v", err))

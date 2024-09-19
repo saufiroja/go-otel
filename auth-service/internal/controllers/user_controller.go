@@ -5,6 +5,7 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/contracts/requests"
 	"github.com/saufiroja/go-otel/auth-service/internal/contracts/responses"
 	"github.com/saufiroja/go-otel/auth-service/internal/services"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/metrics"
 	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -14,18 +15,23 @@ import (
 type userController struct {
 	UserService services.UserService
 	Trace       *tracing.Tracer
+	Meter       *metrics.Metric
 }
 
-func NewUserController(userService services.UserService, trace *tracing.Tracer) UserController {
+func NewUserController(userService services.UserService, trace *tracing.Tracer,
+	meter *metrics.Metric) UserController {
 	return &userController{
 		UserService: userService,
 		Trace:       trace,
+		Meter:       meter,
 	}
 }
 
 func (u *userController) RegisterUser(c *fiber.Ctx) error {
 	ctx, span := u.Trace.StartSpan(c.Context(), "controller.RegisterUser")
 	defer span.End()
+
+	u.Meter.Counter(ctx, "number_of_register_requests", "Number of register requests", "request")
 
 	request := &requests.RegisterRequest{}
 	err := c.BodyParser(request)
@@ -69,6 +75,8 @@ func (u *userController) RegisterUser(c *fiber.Ctx) error {
 func (u *userController) LoginUser(c *fiber.Ctx) error {
 	ctx, span := u.Trace.StartSpan(c.Context(), "controller.LoginUser")
 	defer span.End()
+
+	u.Meter.Counter(ctx, "number_of_login_requests", "Number of login requests", "request")
 
 	request := &requests.LoginRequest{}
 	err := c.BodyParser(request)
