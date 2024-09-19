@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/saufiroja/go-otel/auth-service/config"
 	"github.com/saufiroja/go-otel/auth-service/internal/controllers"
+	"github.com/saufiroja/go-otel/auth-service/internal/middlerwares"
 	"github.com/saufiroja/go-otel/auth-service/internal/repositories"
 	"github.com/saufiroja/go-otel/auth-service/internal/services"
 	"github.com/saufiroja/go-otel/auth-service/internal/utils"
@@ -37,6 +38,9 @@ func (a *App) Start() {
 	ctx := context.Background()
 	tracer := tracing.NewTracer(ctx, serviceName, resource, conf, logger)
 	meter := metrics.NewMetric(ctx, serviceName, resource, conf, logger)
+
+	//middlewares
+	responseTimeMiddleware := middlerwares.NewMiddleware(meter)
 	//utils
 	generateToken := utils.NewGenerateToken(conf, tracer)
 	passwordHasher := utils.NewBcryptHasher(tracer)
@@ -45,8 +49,11 @@ func (a *App) Start() {
 	userService := services.NewUserService(userRepository, logger, generateToken, tracer, passwordHasher)
 	userController := controllers.NewUserController(userService, tracer, meter)
 
-	a.Post("/register", userController.RegisterUser)
-	a.Post("/login", userController.LoginUser)
+	a.Post("/register",
+		responseTimeMiddleware.ResponseTimeMiddleware(ctx, "register"), userController.RegisterUser)
+
+	a.Post("/login",
+		responseTimeMiddleware.ResponseTimeMiddleware(ctx, "login"), userController.LoginUser)
 
 	if err := a.Listen(fmt.Sprintf(":%s", conf.Http.Port)); err != nil {
 		logger.LogPanic(err.Error())

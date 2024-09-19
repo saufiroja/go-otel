@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/metric"
 	sdkMetrics "go.opentelemetry.io/otel/sdk/metric"
+	"time"
 )
 
 type Metric struct {
@@ -56,4 +57,17 @@ func (m *Metric) Counter(ctx context.Context, name string, description, unit str
 		return
 	}
 	counter.Add(ctx, 1)
+}
+
+func (m *Metric) Histogram(ctx context.Context, name string, description, unit string, duration time.Duration) {
+	histogram, err := m.Meter.Int64Histogram(fmt.Sprintf("%s.%s", m.ServiceName, name),
+		metric.WithDescription(description),
+		metric.WithUnit(unit),
+	)
+	if err != nil {
+		m.logger.LogError(fmt.Sprintf("failed to create histogram: %v", err))
+		return
+	}
+
+	histogram.Record(ctx, duration.Milliseconds())
 }
