@@ -11,6 +11,7 @@ import (
 	"github.com/saufiroja/go-otel/auth-service/internal/utils"
 	"github.com/saufiroja/go-otel/auth-service/pkg/databases"
 	"github.com/saufiroja/go-otel/auth-service/pkg/logging"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/providers"
 	"github.com/saufiroja/go-otel/auth-service/pkg/observability/tracing"
 )
 
@@ -31,7 +32,9 @@ func (a *App) Start() {
 	defer postgresInstance.CloseConnection()
 
 	const serviceName = "auth-service"
-	tracer := tracing.NewExporter(context.Background(), logger, serviceName, conf)
+	resource := providers.NewProviderFactory(logger)
+	tracer := tracing.NewTracer(context.Background(), serviceName, resource, conf, logger)
+	
 	//utils
 	generateToken := utils.NewGenerateToken(conf, tracer)
 	passwordHasher := utils.NewBcryptHasher(tracer)

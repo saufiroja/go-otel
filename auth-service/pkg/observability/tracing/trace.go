@@ -5,31 +5,25 @@ import (
 	"fmt"
 	"github.com/saufiroja/go-otel/auth-service/config"
 	"github.com/saufiroja/go-otel/auth-service/pkg/logging"
+	"github.com/saufiroja/go-otel/auth-service/pkg/observability/providers"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
+// Tracer is a wrapper for OpenTelemetry Tracer
 type Tracer struct {
 	Trace trace.Tracer
 }
 
-func NewExporter(ctx context.Context, logging logging.Logger, serviceName string, conf *config.AppConfig) *Tracer {
-	res, err := resource.New(ctx,
-		resource.WithFromEnv(),
-		resource.WithProcess(),
-		resource.WithTelemetrySDK(),
-		resource.WithHost(),
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String(serviceName),
-		))
+// NewTracer creates a new tracer provider
+func NewTracer(ctx context.Context, serviceName string, provider *providers.ProviderFactory,
+	conf *config.AppConfig, logging logging.Logger) *Tracer {
+	res, err := provider.CreateResource(ctx, serviceName)
 	if err != nil {
-		logging.LogError(fmt.Sprintf("failed to create resource: %v", err))
-		panic(err)
+		logging.LogPanic(err.Error())
 	}
 
 	client := otlptracegrpc.NewClient(
@@ -38,8 +32,7 @@ func NewExporter(ctx context.Context, logging logging.Logger, serviceName string
 	)
 	exp, err := otlptrace.New(ctx, client)
 	if err != nil {
-		logging.LogError(fmt.Sprintf("failed to create trace exporter: %v", err))
-		panic(err)
+		logging.LogPanic(fmt.Sprintf("failed to create OTLP trace exporter: %v", err))
 	}
 
 	tp := sdktrace.NewTracerProvider(
@@ -58,7 +51,7 @@ func NewExporter(ctx context.Context, logging logging.Logger, serviceName string
 	}
 }
 
-func (t *Tracer) StartSpan(ctx context.Context, name string,
-	opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+// StartSpan starts a new span
+func (t *Tracer) StartSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	return t.Trace.Start(ctx, name, opts...)
 }
